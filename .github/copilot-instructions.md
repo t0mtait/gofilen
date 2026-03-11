@@ -1,0 +1,9 @@
+- [x] Verify that the copilot-instructions.md file in the .github directory is created. (Created in .github.)
+- [x] Clarify Project Requirements (Go CLI to manage files in a user-specified directory.)
+- [x] Scaffold the Project (Created Go module, main entrypoint, and README.)
+- [x] Customize the Project (Implemented file-management CLI commands.)
+- [x] Install Required Extensions (No extensions needed.)
+- [ ] Compile the Project
+- [ ] Create and Run Task
+- [ ] Launch the Project
+- [ ] Ensure Documentation is Complete

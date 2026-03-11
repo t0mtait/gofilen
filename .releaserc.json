@@ -1,0 +1,32 @@
+{
+  "branches": ["master", "main"],
+  "plugins": [
+    "@semantic-release/commit-analyzer",
+    "@semantic-release/release-notes-generator",
+    [
+      "@semantic-release/changelog",
+      {
+        "changelogFile": "CHANGELOG.md"
+      }
+    ],
+    [
+      "@semantic-release/github",
+      {
+        "assets": [
+          { "path": "dist/gofilen_linux_amd64",       "label": "Linux x86-64" },
+          { "path": "dist/gofilen_linux_arm64",       "label": "Linux arm64" },
+          { "path": "dist/gofilen_darwin_amd64",      "label": "macOS x86-64" },
+          { "path": "dist/gofilen_darwin_arm64",      "label": "macOS arm64 (Apple Silicon)" },
+          { "path": "dist/gofilen_windows_amd64.exe", "label": "Windows x86-64" }
+        ]
+      }
+    ],
+    [
+      "@semantic-release/git",
+      {
+        "assets": ["CHANGELOG.md"],
+        "message": "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
+      }
+    ]
+  ]
+}

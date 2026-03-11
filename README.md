@@ -1,37 +1,76 @@
 # gofilen
 
-CLI tool for basic file management within a user-specified directory.
+![screenshot](image.png)
+
+
+An interactive terminal chat application for your [Filen](https://filen.io) cloud drive, powered by a local LLM via [Ollama](https://ollama.com).
+
+Ask the AI to list, read, write, move, copy, and delete files on your Filen drive — all from the terminal, fully private.
+
+```
+┌ ⬡ gofilen  ~/filen  llama3.2 ────────────────────────────────────┐
+│                                                                    │
+│  — Filen drive: ~/filen  •  model: llama3.2 —                     │
+│                                                                    │
+│  ▶ You                                                             │
+│  list my files and summarise what's in documents/                  │
+│                                                                    │
+│  ◆ AI                                                              │
+│  ╭─ list_files ──────────────────────╮                             │
+│  │  ⚙  list_files                    │                             │
+│  │     { "path": "." }               │                             │
+│  ╰───────────────────────────────────╯                             │
+│  │ documents/  2025-01-10 14:32                                    │
+│  │ notes.txt   2025-03-01 09:15                                    │
+│                                                                    │
+│  You have 2 items at the root. Let me look inside documents/…      │
+└────────────────────────────────────────────────────────────────────┘
+  Enter  send  ·  Alt+Enter  newline  ·  Ctrl+L  clear  ·  Esc  quit
+```
+
+## Requirements
+
+- [Ollama](https://ollama.com) running locally (`ollama serve`)
+- A model that supports tool/function calling (e.g. `llama3.2`, `qwen2.5`, `mistral-nemo`)
+
+```bash
+ollama pull llama3.2
+```
+
+## Installation
+
+```bash
+go install github.com/t0mtait/gofilen@latest
+```
+
+Or build from source:
+
+```bash
+git clone https://github.com/t0mtait/gofilen
+cd gofilen
+go build -o gofilen .
+```
 
 ## Usage
 
 ```bash
-gofilen -dir <directory> <command> [args]
+# Defaults: --dir ~/filen  --model llama3.2  --ollama http://localhost:11434
+gofilen
+
+# Custom options
+gofilen --dir /mnt/filen --model qwen2.5 --ollama http://192.168.1.10:11434
 ```
 
-## Commands
+## What the AI can do
 
-- `list` — list entries in the target directory
-- `info <path>` — show info for a file or directory
-- `read <path>` — print file contents
-- `write <path> -content <text>` — write text to a file (creates or overwrites)
-- `delete <path>` — delete a file
-- `mkdir <path>` — create a directory (including parents)
-- `touch <path>` — create an empty file if it doesn’t exist
-- `copy <src> <dst>` — copy a file
-- `move <src> <dst>` — move or rename a file
+| Action | Example prompt |
+|--------|---------------|
+| List files | "what's in my documents folder?" |
+| Read a file | "show me the contents of notes.txt" |
+| Write a file | "create a file called todo.txt with my three tasks: …" |
+| Create directories | "make a folder called projects/2025" |
+| Move / rename | "rename report-draft.docx to report-final.docx" |
+| Copy | "copy my notes to a backup folder" |
+| Delete | "delete all files in the temp/ directory" |
 
-All paths are resolved relative to `-dir` and are blocked from escaping that directory.
-
-## Examples
-
-```bash
-gofilen -dir ./data list
-gofilen -dir ./data info notes.txt
-gofilen -dir ./data read notes.txt
-gofilen -dir ./data write notes.txt -content "hello"
-gofilen -dir ./data mkdir reports
-gofilen -dir ./data copy notes.txt reports/notes.txt
-```connect to filen network mount
-language model trained on all data in filen mount
-query data, update file names, move files around, create dirs, delete files, etc.
-
+All file operations are sandboxed to the Filen mount directory — paths cannot escape it.
