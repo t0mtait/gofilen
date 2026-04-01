@@ -211,6 +211,10 @@ func (f *Filer) Move(src, dst string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	// Ensure destination stays within the base directory.
+	if !strings.HasPrefix(dstAbs, f.Base+string(os.PathSeparator)) && dstAbs != f.Base {
+		return "", errors.New("destination path escapes Filen mount directory")
+	}
 	if err := os.MkdirAll(filepath.Dir(dstAbs), 0o755); err != nil {
 		return "", err
 	}
@@ -230,6 +234,10 @@ func (f *Filer) Copy(src, dst string) (string, error) {
 	dstAbs, err := f.resolve(dst)
 	if err != nil {
 		return "", err
+	}
+	// Ensure destination stays within the base directory.
+	if !strings.HasPrefix(dstAbs, f.Base+string(os.PathSeparator)) && dstAbs != f.Base {
+		return "", errors.New("destination path escapes Filen mount directory")
 	}
 	srcFile, err := os.Open(srcAbs)
 	if err != nil {
@@ -258,30 +266,6 @@ func (f *Filer) Copy(src, dst string) (string, error) {
 	}
 	result := fmt.Sprintf("copied %s → %s", src, dst)
 	f.recordAction("copy", fmt.Sprintf("%s → %s", src, dst), result)
-	return result, nil
-}
-
-func (f *Filer) Touch(path string) (string, error) {
-	target, err := f.resolve(path)
-	if err != nil {
-		return "", err
-	}
-	if _, err := os.Stat(target); err == nil {
-		now := time.Now()
-		if err := os.Chtimes(target, now, now); err != nil {
-			return "", err
-		}
-		result := fmt.Sprintf("updated modification time: %s", path)
-		f.recordAction("touch", path, result)
-		return result, nil
-	}
-	file, err := os.OpenFile(target, os.O_CREATE|os.O_WRONLY, 0o644)
-	if err != nil {
-		return "", err
-	}
-	file.Close()
-	result := fmt.Sprintf("created empty file: %s", path)
-	f.recordAction("touch", path, result)
 	return result, nil
 }
 
