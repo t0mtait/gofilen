@@ -120,14 +120,21 @@ func (f *Filer) List(path string) (string, error) {
 	for _, e := range entries {
 		name := e.Name()
 		var sizeStr string
-		if e.IsDir() {
+		var modTime string
+		if info, err := e.Info(); err == nil {
+			if e.IsDir() {
+				name += "/"
+				sizeStr = dirItemCount(filepath.Join(target, e.Name()))
+			} else {
+				sizeStr = formatSize(info.Size())
+			}
+			modTime = info.ModTime().Format("2006-01-02 15:04")
+		} else if e.IsDir() {
 			name += "/"
 			sizeStr = dirItemCount(filepath.Join(target, e.Name()))
-		} else if info, err := e.Info(); err == nil {
-			sizeStr = formatSize(info.Size())
 		}
-		if info, err := e.Info(); err == nil {
-			fmt.Fprintf(&sb, "%-40s  %-10s  %s\n", name, sizeStr, info.ModTime().Format("2006-01-02 15:04"))
+		if modTime != "" {
+			fmt.Fprintf(&sb, "%-40s  %-10s  %s\n", name, sizeStr, modTime)
 		} else {
 			fmt.Fprintf(&sb, "%-40s  %-10s\n", name, sizeStr)
 		}
@@ -213,7 +220,7 @@ func (f *Filer) Move(src, dst string) (string, error) {
 	}
 	// Ensure destination stays within the base directory.
 	if !strings.HasPrefix(dstAbs, f.Base+string(os.PathSeparator)) && dstAbs != f.Base {
-		return "", errors.New("destination path escapes Filen mount directory")
+		return "", errors.New("path escapes Filen mount directory")
 	}
 	if err := os.MkdirAll(filepath.Dir(dstAbs), 0o755); err != nil {
 		return "", err
@@ -237,7 +244,7 @@ func (f *Filer) Copy(src, dst string) (string, error) {
 	}
 	// Ensure destination stays within the base directory.
 	if !strings.HasPrefix(dstAbs, f.Base+string(os.PathSeparator)) && dstAbs != f.Base {
-		return "", errors.New("destination path escapes Filen mount directory")
+		return "", errors.New("path escapes Filen mount directory")
 	}
 	srcFile, err := os.Open(srcAbs)
 	if err != nil {
