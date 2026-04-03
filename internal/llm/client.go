@@ -62,9 +62,9 @@ type PropertySchema struct {
 
 // StreamEvent is an event emitted by the conversation runner.
 type StreamEvent struct {
-	Type           string    // "chunk" | "tool_call" | "tool_result" | "tool_cancelled" | "done" | "error"
+	Type           string    // "chunk" | "tool_call" | "tool_result" | "tool_cancelled" | "done" | "error" | "tool_call_raw"
 	Content        string    // chunk text
-	ToolName       string    // tool_call / tool_result / tool_cancelled
+	ToolName       string    // tool_call / tool_call_raw / tool_result / tool_cancelled
 	ToolArgs       string    // tool_call — JSON string
 	ToolResult     string    // tool_result
 	Err            error     // error
