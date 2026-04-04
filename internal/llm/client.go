@@ -134,6 +134,8 @@ func (c *Client) chat(ctx context.Context, messages []Message, tools []Tool, ch 
 	}
 
 	scanner := bufio.NewScanner(resp.Body)
+	// Increase max token size to 1MB to handle large directory listings.
+	scanner.Buffer(make([]byte, 65536), 1024*1024)
 	for scanner.Scan() {
 		line := scanner.Text()
 		if line == "" {
