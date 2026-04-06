@@ -62,9 +62,9 @@ type PropertySchema struct {
 
 // StreamEvent is an event emitted by the conversation runner.
 type StreamEvent struct {
-	Type           string    // "chunk" | "tool_call" | "tool_result" | "tool_cancelled" | "done" | "error"
+	Type           string    // "chunk" | "tool_call" | "tool_result" | "tool_cancelled" | "done" | "error" | "tool_call_raw"
 	Content        string    // chunk text
-	ToolName       string    // tool_call / tool_result / tool_cancelled
+	ToolName       string    // tool_call / tool_call_raw / tool_result / tool_cancelled
 	ToolArgs       string    // tool_call — JSON string
 	ToolResult     string    // tool_result
 	Err            error     // error
@@ -134,6 +134,8 @@ func (c *Client) chat(ctx context.Context, messages []Message, tools []Tool, ch 
 	}
 
 	scanner := bufio.NewScanner(resp.Body)
+	// Increase max token size to 1MB to handle large directory listings.
+	scanner.Buffer(make([]byte, 65536), 1024*1024)
 	for scanner.Scan() {
 		line := scanner.Text()
 		if line == "" {
