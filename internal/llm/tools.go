@@ -144,18 +144,42 @@ func ExecuteTool(name string, argsRaw json.RawMessage, filer *fs.Filer) (string,
 
 	switch name {
 	case "list_files":
+		if args["path"] == "" {
+			return "", fmt.Errorf("list_files requires 'path' argument")
+		}
 		return filer.List(args["path"])
 	case "read_file":
+		if args["path"] == "" {
+			return "", fmt.Errorf("read_file requires 'path' argument")
+		}
 		return filer.ReadFile(args["path"])
 	case "write_file":
+		if args["path"] == "" {
+			return "", fmt.Errorf("write_file requires 'path' argument")
+		}
+		if args["content"] == "" {
+			return "", fmt.Errorf("write_file requires 'content' argument")
+		}
 		return filer.WriteFile(args["path"], args["content"])
 	case "create_dir":
+		if args["path"] == "" {
+			return "", fmt.Errorf("create_dir requires 'path' argument")
+		}
 		return filer.CreateDir(args["path"])
 	case "delete":
+		if args["path"] == "" {
+			return "", fmt.Errorf("delete requires 'path' argument")
+		}
 		return filer.Delete(args["path"])
 	case "move":
+		if args["src"] == "" || args["dst"] == "" {
+			return "", fmt.Errorf("move requires 'src' and 'dst' arguments")
+		}
 		return filer.Move(args["src"], args["dst"])
 	case "copy":
+		if args["src"] == "" || args["dst"] == "" {
+			return "", fmt.Errorf("copy requires 'src' and 'dst' arguments")
+		}
 		return filer.Copy(args["src"], args["dst"])
 	case "get_action_history":
 		return filer.ActionHistory(), nil
