@@ -232,8 +232,11 @@ func (f *Filer) Move(src, dst string) (string, error) {
 	if !strings.HasPrefix(dstAbs, f.Base+string(os.PathSeparator)) && dstAbs != f.Base {
 		return "", errors.New("path escapes Filen mount directory")
 	}
-	if err := os.MkdirAll(filepath.Dir(dstAbs), 0o755); err != nil {
-		return "", err
+	// Create parent directory of destination if needed, but not the base directory itself.
+	if filepath.Dir(dstAbs) != f.Base {
+		if err := os.MkdirAll(filepath.Dir(dstAbs), 0o755); err != nil {
+			return "", err
+		}
 	}
 	if err := os.Rename(srcAbs, dstAbs); err != nil {
 		return "", err
@@ -269,8 +272,11 @@ func (f *Filer) Copy(src, dst string) (string, error) {
 	if info.IsDir() {
 		return "", errors.New("cannot copy a directory")
 	}
-	if err := os.MkdirAll(filepath.Dir(dstAbs), 0o755); err != nil {
-		return "", err
+	// Create parent directory of destination if needed, but not the base directory itself.
+	if filepath.Dir(dstAbs) != f.Base {
+		if err := os.MkdirAll(filepath.Dir(dstAbs), 0o755); err != nil {
+			return "", err
+		}
 	}
 	dstFile, err := os.OpenFile(dstAbs, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, info.Mode())
 	if err != nil {

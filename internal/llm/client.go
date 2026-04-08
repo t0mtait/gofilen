@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 )
 
@@ -129,7 +130,9 @@ func (c *Client) chat(ctx context.Context, messages []Message, tools []Tool, ch 
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		ch <- StreamEvent{Type: "error", Err: fmt.Errorf("ollama returned HTTP %d", resp.StatusCode)}
+		// Read body for error context, but limit size.
+		body, _ := io.ReadAll(io.LimitReader(resp.Body, 1024))
+		ch <- StreamEvent{Type: "error", Err: fmt.Errorf("ollama returned HTTP %d: %s", resp.StatusCode, string(body))}
 		return
 	}
 
