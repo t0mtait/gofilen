@@ -12,7 +12,10 @@ type Config struct {
 }
 
 func Default() Config {
-	home, _ := os.UserHomeDir()
+	home, err := os.UserHomeDir()
+	if err != nil {
+		home = "/tmp"
+	}
 	return Config{
 		Dir:       filepath.Join(home, "filen"),
 		Model:     "llama3.2",
