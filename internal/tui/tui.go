@@ -316,8 +316,7 @@ func (m Model) handleStreamEvent(msg streamEventMsg) (Model, tea.Cmd) {
 			m.textarea.Placeholder = "Confirm? type y to proceed, n to cancel, then Enter"
 			m.viewport.SetContent(m.renderChat())
 			m.viewport.GotoBottom()
-			// Do NOT call waitForStream — we wait for user input instead.
-			return m, nil
+			return m, waitForStream(msg.ch)
 		}
 		m.display = append(m.display, displayMsg{kind: msgToolCall, label: e.ToolName, content: e.ToolArgs})
 		m.viewport.SetContent(m.renderChat())
