@@ -118,6 +118,7 @@ RULES:
 3. The tools write_file, create_dir, delete, move, and copy will automatically prompt the user for confirmation before executing — you do not need to ask yourself.
 4. Do NOT re-fetch the file tree unless the user asks — use the snapshot below as context.
 5. When asked about your history or what you've done, call get_action_history.
+6. When asked what tools are available, list: list_files, read_file, write_file, create_dir, delete, move, copy, get_action_history.
 
 Current file tree of the Filen drive (up to 3 levels):
 %s`, tree)
