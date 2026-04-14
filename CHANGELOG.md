@@ -1,3 +1,16 @@
+# [1.1.0](https://github.com/t0mtait/gofilen/compare/v1.0.1...v1.1.0) (2026-04-14)
+
+
+### Bug Fixes
+
+* single e.Info() syscall in List and consistent error messages ([8beece7](https://github.com/t0mtait/gofilen/commit/8beece774ca41a6c71853ff0238efd6458557fbd))
+* wait for stream events while awaiting destructive tool confirmation ([dd0e85a](https://github.com/t0mtait/gofilen/commit/dd0e85aef456faa1d0e7dc0dae999fece5e84b32))
+
+
+### Features
+
+* add 'tree' tool to LLM toolset for directory hierarchy browsing ([184973c](https://github.com/t0mtait/gofilen/commit/184973c36df20501c71a886823f4f0a232949cc9))
+
 ## [1.0.1](https://github.com/t0mtait/gofilen/compare/v1.0.0...v1.0.1) (2026-04-01)
 
 
