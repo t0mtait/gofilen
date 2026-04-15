@@ -32,3 +32,8 @@ go.work.sum
 # .vscode/
 # Release build artifacts
 dist/
+
+# Next.js build outputs
+web/node_modules/
+web/.next/
+web/out/

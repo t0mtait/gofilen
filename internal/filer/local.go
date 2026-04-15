@@ -1,7 +1,6 @@
-package fs
+package filer
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -11,23 +10,22 @@ import (
 	"time"
 )
 
-const maxReadSize = 1 << 20 // 1 MB
-
-// ActionRecord logs a single tool execution.
-type ActionRecord struct {
-	Time   time.Time
-	Tool   string
-	Args   string
-	Result string
-}
-
-type Filer struct {
+// LocalFiler is the original filesystem-backed Filer.
+type LocalFiler struct {
 	Base    string
 	mu      sync.Mutex
 	actions []ActionRecord
 }
 
-func (f *Filer) recordAction(tool, args, result string) {
+func NewLocal(base string) (*LocalFiler, error) {
+	abs, err := filepath.Abs(base)
+	if err != nil {
+		return nil, err
+	}
+	return &LocalFiler{Base: abs}, nil
+}
+
+func (f *LocalFiler) recordAction(tool, args, result string) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.actions = append(f.actions, ActionRecord{
@@ -38,8 +36,8 @@ func (f *Filer) recordAction(tool, args, result string) {
 	})
 }
 
-// ActionHistory returns a human-readable log of all executed file operations.
-func (f *Filer) ActionHistory() string {
+// ActionHistory implements Filer.
+func (f *LocalFiler) ActionHistory() string {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	if len(f.actions) == 0 {
@@ -58,7 +56,7 @@ func (f *Filer) ActionHistory() string {
 	return sb.String()
 }
 
-func formatSize(size int64) string {
+func formatLocalSize(size int64) string {
 	switch {
 	case size < 1024:
 		return fmt.Sprintf("%d B", size)
@@ -71,7 +69,7 @@ func formatSize(size int64) string {
 	}
 }
 
-func dirItemCount(path string) string {
+func localDirItemCount(path string) string {
 	entries, err := os.ReadDir(path)
 	if err != nil {
 		return "dir"
@@ -79,40 +77,35 @@ func dirItemCount(path string) string {
 	return fmt.Sprintf("%d items", len(entries))
 }
 
-func New(base string) (*Filer, error) {
-	abs, err := filepath.Abs(base)
-	if err != nil {
-		return nil, err
-	}
-	return &Filer{Base: abs}, nil
-}
-
-func (f *Filer) resolve(rel string) (string, error) {
+func (f *LocalFiler) resolve(rel string) (string, error) {
 	if rel == "" || rel == "." || rel == "/" {
 		return f.Base, nil
 	}
 	rel = strings.TrimPrefix(rel, "/")
 	abs := filepath.Join(f.Base, rel)
 
-	// Resolve any symlinks to detect sandbox escapes.
 	realAbs, err := filepath.EvalSymlinks(abs)
-	if err != nil && !errors.Is(err, os.ErrNotExist) {
+	if err != nil && !os.IsNotExist(err) {
 		return "", err
 	}
-	// If EvalSymlinks failed because the file doesn't exist, use the non-resolved path.
-	// The actual file operation will fail with a proper error anyway.
 	if err != nil {
 		realAbs = abs
 	}
 
-	// Verify the resolved path is still within the sandbox.
 	if realAbs != f.Base && !strings.HasPrefix(realAbs, f.Base+string(os.PathSeparator)) {
-		return "", errors.New("path escapes Filen mount directory")
+		return "", fmt.Errorf("path escapes Filen mount directory")
 	}
 	return realAbs, nil
 }
 
-func (f *Filer) List(path string) (string, error) {
+// Ping implements Filer.
+func (f *LocalFiler) Ping() error {
+	_, err := os.Stat(f.Base)
+	return err
+}
+
+// List implements Filer.
+func (f *LocalFiler) List(path string) (string, error) {
 	target, err := f.resolve(path)
 	if err != nil {
 		return "", err
@@ -134,14 +127,14 @@ func (f *Filer) List(path string) (string, error) {
 		if info, err := e.Info(); err == nil {
 			if e.IsDir() {
 				name += "/"
-				sizeStr = dirItemCount(filepath.Join(target, e.Name()))
+				sizeStr = localDirItemCount(filepath.Join(target, e.Name()))
 			} else {
-				sizeStr = formatSize(info.Size())
+				sizeStr = formatLocalSize(info.Size())
 			}
 			modTime = info.ModTime().Format("2006-01-02 15:04")
 		} else if e.IsDir() {
 			name += "/"
-			sizeStr = dirItemCount(filepath.Join(target, e.Name()))
+			sizeStr = localDirItemCount(filepath.Join(target, e.Name()))
 		}
 		if modTime != "" {
 			fmt.Fprintf(&sb, "%-40s  %-10s  %s\n", name, sizeStr, modTime)
@@ -152,7 +145,8 @@ func (f *Filer) List(path string) (string, error) {
 	return sb.String(), nil
 }
 
-func (f *Filer) ReadFile(path string) (string, error) {
+// ReadFile implements Filer.
+func (f *LocalFiler) ReadFile(path string) (string, error) {
 	target, err := f.resolve(path)
 	if err != nil {
 		return "", err
@@ -162,7 +156,7 @@ func (f *Filer) ReadFile(path string) (string, error) {
 		return "", err
 	}
 	if info.IsDir() {
-		return "", errors.New("path is a directory; use list_files instead")
+		return "", fmt.Errorf("path is a directory; use list_files instead")
 	}
 	if info.Size() > maxReadSize {
 		return "", fmt.Errorf("file too large to read inline (%d bytes); max is %d", info.Size(), maxReadSize)
@@ -174,7 +168,8 @@ func (f *Filer) ReadFile(path string) (string, error) {
 	return string(data), nil
 }
 
-func (f *Filer) WriteFile(path, content string) (string, error) {
+// WriteFile implements Filer.
+func (f *LocalFiler) WriteFile(path, content string) (string, error) {
 	target, err := f.resolve(path)
 	if err != nil {
 		return "", err
@@ -190,7 +185,8 @@ func (f *Filer) WriteFile(path, content string) (string, error) {
 	return result, nil
 }
 
-func (f *Filer) CreateDir(path string) (string, error) {
+// CreateDir implements Filer.
+func (f *LocalFiler) CreateDir(path string) (string, error) {
 	target, err := f.resolve(path)
 	if err != nil {
 		return "", err
@@ -203,13 +199,14 @@ func (f *Filer) CreateDir(path string) (string, error) {
 	return result, nil
 }
 
-func (f *Filer) Delete(path string) (string, error) {
+// Delete implements Filer.
+func (f *LocalFiler) Delete(path string) (string, error) {
 	target, err := f.resolve(path)
 	if err != nil {
 		return "", err
 	}
 	if target == f.Base {
-		return "", errors.New("cannot delete the Filen mount root")
+		return "", fmt.Errorf("cannot delete the Filen mount root")
 	}
 	if err := os.RemoveAll(target); err != nil {
 		return "", err
@@ -219,7 +216,8 @@ func (f *Filer) Delete(path string) (string, error) {
 	return result, nil
 }
 
-func (f *Filer) Move(src, dst string) (string, error) {
+// Move implements Filer.
+func (f *LocalFiler) Move(src, dst string) (string, error) {
 	srcAbs, err := f.resolve(src)
 	if err != nil {
 		return "", err
@@ -228,11 +226,9 @@ func (f *Filer) Move(src, dst string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	// Ensure destination stays within the base directory.
 	if !strings.HasPrefix(dstAbs, f.Base+string(os.PathSeparator)) && dstAbs != f.Base {
-		return "", errors.New("path escapes Filen mount directory")
+		return "", fmt.Errorf("path escapes Filen mount directory")
 	}
-	// Create parent directory of destination if needed, but not the base directory itself.
 	if filepath.Dir(dstAbs) != f.Base {
 		if err := os.MkdirAll(filepath.Dir(dstAbs), 0o755); err != nil {
 			return "", err
@@ -246,7 +242,8 @@ func (f *Filer) Move(src, dst string) (string, error) {
 	return result, nil
 }
 
-func (f *Filer) Copy(src, dst string) (string, error) {
+// Copy implements Filer.
+func (f *LocalFiler) Copy(src, dst string) (string, error) {
 	srcAbs, err := f.resolve(src)
 	if err != nil {
 		return "", err
@@ -255,9 +252,8 @@ func (f *Filer) Copy(src, dst string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	// Ensure destination stays within the base directory.
 	if !strings.HasPrefix(dstAbs, f.Base+string(os.PathSeparator)) && dstAbs != f.Base {
-		return "", errors.New("path escapes Filen mount directory")
+		return "", fmt.Errorf("path escapes Filen mount directory")
 	}
 	srcFile, err := os.Open(srcAbs)
 	if err != nil {
@@ -270,9 +266,8 @@ func (f *Filer) Copy(src, dst string) (string, error) {
 		return "", err
 	}
 	if info.IsDir() {
-		return "", errors.New("cannot copy a directory")
+		return "", fmt.Errorf("cannot copy a directory")
 	}
-	// Create parent directory of destination if needed, but not the base directory itself.
 	if filepath.Dir(dstAbs) != f.Base {
 		if err := os.MkdirAll(filepath.Dir(dstAbs), 0o755); err != nil {
 			return "", err
@@ -292,10 +287,10 @@ func (f *Filer) Copy(src, dst string) (string, error) {
 	return result, nil
 }
 
-// Tree returns a visual tree of the Filen mount up to maxDepth levels.
-func (f *Filer) Tree(maxDepth int) string {
+// Tree implements Filer.
+func (f *LocalFiler) Tree(maxDepth int) string {
 	var sb strings.Builder
-	walkTree(&sb, f.Base, "", 0, maxDepth)
+	walkTreeLocal(&sb, f.Base, "", 0, maxDepth)
 	result := sb.String()
 	if result == "" {
 		return "(empty)"
@@ -303,7 +298,7 @@ func (f *Filer) Tree(maxDepth int) string {
 	return result
 }
 
-func walkTree(sb *strings.Builder, path, indent string, depth, maxDepth int) {
+func walkTreeLocal(sb *strings.Builder, path, indent string, depth, maxDepth int) {
 	if depth > maxDepth {
 		return
 	}
@@ -325,7 +320,7 @@ func walkTree(sb *strings.Builder, path, indent string, depth, maxDepth int) {
 		}
 		fmt.Fprintf(sb, "%s%s%s\n", indent, prefix, name)
 		if e.IsDir() && depth < maxDepth {
-			walkTree(sb, filepath.Join(path, e.Name()), childIndent, depth+1, maxDepth)
+			walkTreeLocal(sb, filepath.Join(path, e.Name()), childIndent, depth+1, maxDepth)
 		}
 	}
 }

@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"strings"
 
-	"github.com/t0mtait/gofilen/internal/fs"
+	"github.com/t0mtait/gofilen/internal/filer"
 )
 
 const maxToolRounds = 10
@@ -13,7 +13,7 @@ const maxToolRounds = 10
 // RunConversation drives a full chat turn: it streams the LLM response, handles
 // any tool calls (executing them and re-prompting), and sends all events to ch.
 // ch is closed when the turn is complete.
-func RunConversation(ctx context.Context, client *Client, initialMessages []Message, tools []Tool, filer *fs.Filer, ch chan<- StreamEvent) {
+func RunConversation(ctx context.Context, client *Client, initialMessages []Message, tools []Tool, f filer.Filer, ch chan<- StreamEvent) {
 	defer close(ch)
 
 	messages := make([]Message, len(initialMessages))
@@ -94,7 +94,7 @@ func RunConversation(ctx context.Context, client *Client, initialMessages []Mess
 				ch <- StreamEvent{Type: "tool_call", ToolName: tc.name, ToolArgs: argsStr}
 			}
 
-			result, err := ExecuteTool(tc.name, tc.args, filer)
+			result, err := ExecuteTool(tc.name, tc.args, f)
 			if err != nil {
 				result = "Error: " + err.Error()
 			}

@@ -13,7 +13,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 
 	"github.com/t0mtait/gofilen/internal/config"
-	"github.com/t0mtait/gofilen/internal/fs"
+	"github.com/t0mtait/gofilen/internal/filer"
 	"github.com/t0mtait/gofilen/internal/llm"
 )
 
@@ -57,7 +57,7 @@ type streamEventMsg struct {
 
 type Model struct {
 	cfg       config.Config
-	filer     *fs.Filer
+	filer     filer.Filer
 	llmClient *llm.Client
 	tools     []llm.Tool
 
@@ -84,7 +84,7 @@ type Model struct {
 	ready  bool
 }
 
-func newModel(cfg config.Config, filer *fs.Filer) Model {
+func newModel(cfg config.Config, f filer.Filer) Model {
 	ta := textarea.New()
 	ta.Placeholder = "Message the AI…  (Enter to send, Alt+Enter for newline)"
 	ta.Focus()
@@ -96,7 +96,7 @@ func newModel(cfg config.Config, filer *fs.Filer) Model {
 	sp.Spinner = spinner.Points
 	sp.Style = headerSpinnerStyle
 
-	tree := filer.Tree(3)
+	tree := f.Tree(3)
 	systemPrompt := fmt.Sprintf(`You are an intelligent assistant that manages the user's Filen cloud drive.
 
 CAPABILITIES — when asked "what can you do?" or similar, list these:
@@ -118,6 +118,7 @@ RULES:
 3. The tools write_file, create_dir, delete, move, and copy will automatically prompt the user for confirmation before executing — you do not need to ask yourself.
 4. Do NOT re-fetch the file tree unless the user asks — use the snapshot below as context.
 5. When asked about your history or what you've done, call get_action_history.
+6. When asked what tools are available, list: list_files, read_file, write_file, create_dir, delete, move, copy, get_action_history.
 
 Current file tree of the Filen drive (up to 3 levels):
 %s`, tree)
@@ -135,7 +136,7 @@ Current file tree of the Filen drive (up to 3 levels):
 
 	return Model{
 		cfg:       cfg,
-		filer:     filer,
+		filer:     f,
 		llmClient: llm.NewClient(cfg.OllamaURL, cfg.Model),
 		tools:     llm.FileTools(),
 		history:   history,
@@ -147,11 +148,11 @@ Current file tree of the Filen drive (up to 3 levels):
 
 // Run starts the Bubble Tea program.
 func Run(cfg config.Config) error {
-	filer, err := fs.New(cfg.Dir)
+	f, err := filer.NewLocal(cfg.Dir)
 	if err != nil {
 		return fmt.Errorf("cannot access Filen mount at %s: %w", cfg.Dir, err)
 	}
-	m := newModel(cfg, filer)
+	m := newModel(cfg, f)
 	p := tea.NewProgram(m, tea.WithAltScreen(), tea.WithMouseCellMotion())
 	_, err = p.Run()
 	return err
@@ -316,8 +317,7 @@ func (m Model) handleStreamEvent(msg streamEventMsg) (Model, tea.Cmd) {
 			m.textarea.Placeholder = "Confirm? type y to proceed, n to cancel, then Enter"
 			m.viewport.SetContent(m.renderChat())
 			m.viewport.GotoBottom()
-			// Do NOT call waitForStream — we wait for user input instead.
-			return m, nil
+			return m, waitForStream(msg.ch)
 		}
 		m.display = append(m.display, displayMsg{kind: msgToolCall, label: e.ToolName, content: e.ToolArgs})
 		m.viewport.SetContent(m.renderChat())
