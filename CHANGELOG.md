@@ -1,3 +1,12 @@
+## [1.1.2](https://github.com/t0mtait/gofilen/compare/v1.1.1...v1.1.2) (2026-04-15)
+
+
+### Bug Fixes
+
+* add ListFiles method to WebDAVFiler (missing method was causing build failure) ([d40b363](https://github.com/t0mtait/gofilen/commit/d40b363f24dbcfe13e22097b1efc9371c6c9c17f))
+* add ListFiles structured method to Filer interface and handlers ([8eb79fb](https://github.com/t0mtait/gofilen/commit/8eb79fb9848da5e4aab478168e3910a7f15cb133))
+* bugfix ([1cde77c](https://github.com/t0mtait/gofilen/commit/1cde77c9705011f19dff02b12fc8e1bd498bec36))
+
 ## [1.1.1](https://github.com/t0mtait/gofilen/compare/v1.1.0...v1.1.1) (2026-04-15)
 
 
