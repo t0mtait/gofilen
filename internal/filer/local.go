@@ -287,6 +287,32 @@ func (f *LocalFiler) Copy(src, dst string) (string, error) {
 	return result, nil
 }
 
+// ListFiles implements Filer.
+func (f *LocalFiler) ListFiles(path string) ([]File, error) {
+	target, err := f.resolve(path)
+	if err != nil {
+		return nil, err
+	}
+	entries, err := os.ReadDir(target)
+	if err != nil {
+		return nil, err
+	}
+	files := make([]File, 0, len(entries))
+	for _, e := range entries {
+		info, err := e.Info()
+		if err != nil {
+			continue
+		}
+		files = append(files, File{
+			Name:     e.Name(),
+			Size:     info.Size(),
+			IsDir:    e.IsDir(),
+			Modified: info.ModTime(),
+		})
+	}
+	return files, nil
+}
+
 // Tree implements Filer.
 func (f *LocalFiler) Tree(maxDepth int) string {
 	var sb strings.Builder

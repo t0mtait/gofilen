@@ -320,6 +320,28 @@ func (f *WebDAVFiler) Copy(src, dst string) (string, error) {
 	return result, nil
 }
 
+// ListFiles implements Filer.
+func (f *WebDAVFiler) ListFiles(path string) ([]File, error) {
+	if err := f.validatePath(path); err != nil {
+		return nil, err
+	}
+	absPath := f.resolvePath(path)
+	entries, err := f.client.ReadDir(absPath)
+	if err != nil {
+		return nil, err
+	}
+	files := make([]File, 0, len(entries))
+	for _, e := range entries {
+		files = append(files, File{
+			Name:     e.Name(),
+			Size:     e.Size(),
+			IsDir:    e.IsDir(),
+			Modified: e.ModTime(),
+		})
+	}
+	return files, nil
+}
+
 // Tree implements Filer.
 func (f *WebDAVFiler) Tree(maxDepth int) string {
 	var sb strings.Builder
