@@ -412,132 +412,281 @@ func serveWebUI(w http.ResponseWriter, r *http.Request) {
   <title>gofilen</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; height: 100vh; overflow: hidden; }
-    #root { height: 100%; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; height: 100vh; overflow: hidden; display: flex; }
+    #app { display: flex; flex-direction: column; width: 100%; height: 100vh; }
+
+    /* Sidebar */
+    #sidebar { width: 260px; background: #0c1322; border-right: 1px solid rgba(255,255,255,0.06); display: flex; flex-direction: column; overflow: hidden; }
+    #sidebar-header { padding: 16px; border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; align-items: center; gap: 8px; }
+    #sidebar-header h1 { font-size: 1rem; font-weight: 700; color: #e2e8f0; flex: 1; }
+    .sidebar-btn { background: none; border: none; color: #64748b; cursor: pointer; padding: 6px; border-radius: 6px; font-size: 0.75rem; }
+    .sidebar-btn:hover { background: rgba(255,255,255,0.06); color: #e2e8f0; }
+    #file-list { flex: 1; overflow-y: auto; padding: 8px; }
+    .file-item { padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; color: #94a3b8; display: flex; align-items: center; gap: 6px; }
+    .file-item:hover { background: rgba(255,255,255,0.05); color: #e2e8f0; }
+    .file-item.folder { color: #60a5fa; }
+    .file-item.folder::before { content: '📁'; }
+    .file-item.file::before { content: '📄'; }
+    #status-bar { padding: 10px 16px; border-top: 1px solid rgba(255,255,255,0.06); font-size: 0.7rem; color: #475569; }
+    .status-ok { color: #22c55e; }
+    .status-err { color: #ef4444; }
+
+    /* Chat area */
+    #chat-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+    #messages { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 4px; }
+
+    .msg { padding: 10px 14px; border-radius: 10px; font-size: 0.875rem; line-height: 1.5; max-width: 80%; white-space: pre-wrap; word-break: break-word; }
+    .msg.user { background: #1e40af; color: #f8fafc; align-self: flex-end; border-bottom-right-radius: 2px; }
+    .msg.assistant { background: #1e293b; color: #e2e8f0; align-self: flex-start; border-bottom-left-radius: 2px; }
+    .msg.error { background: rgba(239,68,68,0.15); color: #fca5a5; border: 1px solid rgba(239,68,68,0.3); }
+    .msg-tool { background: #1e293b; border-radius: 8px; padding: 10px 14px; margin: 4px 0; border-left: 3px solid #3b82f6; font-size: 0.8rem; }
+    .msg-tool-name { color: #60a5fa; font-weight: 600; margin-bottom: 2px; }
+    .msg-tool-args { color: #94a3b8; font-size: 0.75rem; }
+    .msg-result { background: rgba(34,197,94,0.08); border-radius: 8px; padding: 10px 14px; margin: 4px 0; border-left: 3px solid #22c55e; font-size: 0.8rem; color: #86efac; max-height: 200px; overflow-y: auto; }
+
+    #welcome { text-align: center; padding: 40px 20px; color: #475569; }
+    #welcome h2 { font-size: 1.25rem; color: #64748b; margin-bottom: 8px; }
+    #welcome p { font-size: 0.875rem; line-height: 1.6; }
+
+    #input-area { padding: 12px 16px; border-top: 1px solid rgba(255,255,255,0.06); display: flex; gap: 8px; align-items: flex-end; }
+    #messageInput { flex: 1; background: #1e293b; border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 10px 14px; color: #f8fafc; font-size: 0.875rem; resize: none; outline: none; min-height: 42px; max-height: 120px; font-family: inherit; }
+    #messageInput:focus { border-color: #3b82f6; }
+    #messageInput::placeholder { color: #475569; }
+    #sendBtn { background: #3b82f6; border: none; border-radius: 10px; padding: 10px 16px; color: white; cursor: pointer; font-size: 0.875rem; font-weight: 600; transition: opacity 0.2s; }
+    #sendBtn:hover { opacity: 0.85; }
+    #sendBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* Connection banner */
+    #conn-banner { background: rgba(239,68,68,0.15); border-bottom: 1px solid rgba(239,68,68,0.3); padding: 8px 16px; font-size: 0.8rem; color: #fca5a5; display: none; }
+    #conn-banner.show { display: block; }
   </style>
 </head>
 <body>
-  <div id="root">
-    <div style="display: flex; align-items: center; justify-content: center; height: 100vh; flex-direction: column; gap: 16px;">
-      <p style="color: #64748b;">Loading gofilen...</p>
+<div id="app">
+  <div id="sidebar">
+    <div id="sidebar-header">
+      <h1>📂 gofilen</h1>
+    </div>
+    <div id="file-list">
+      <div id="welcome-files" style="padding:12px 8px;color:#475569;font-size:0.8rem;text-align:center;">
+        Connecting to Filen...
+      </div>
+    </div>
+    <div id="status-bar">
+      <span id="conn-status">Checking connection...</span>
     </div>
   </div>
-  <script>
-    const API_BASE = '';
-    let messages = [];
-    let streaming = false;
+  <div id="chat-area">
+    <div id="conn-banner">⚠️ Cannot connect to gofilen server. Is it running?</div>
+    <div id="messages">
+      <div id="welcome">
+        <h2>gofilen</h2>
+        <p>Your AI-powered Filen file manager.<br>Ask me to list, read, write, or organize your files.</p>
+      </div>
+    </div>
+    <div id="input-area">
+      <textarea id="messageInput" placeholder="Ask me anything about your files..." rows="1"></textarea>
+      <button id="sendBtn">Send</button>
+    </div>
+  </div>
+</div>
+<script>
+(function() {
+  let messages = [];
+  let streaming = false;
+  let connected = false;
 
-    async function api(path, opts = {}) {
-      const res = await fetch(API_BASE + path, {
+  function api(path, opts) {
+    opts = opts || {};
+    var ctrl = new AbortController();
+    var timeout = setTimeout(function() { ctrl.abort(); }, 15000);
+    opts.signal = ctrl.signal;
+    return fetch(path, opts).finally(function() { clearTimeout(timeout); });
+  }
+
+  function escapeHtml(s) {
+    if (!s) return '';
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+  }
+
+  function renderMessages() {
+    var container = document.getElementById('messages');
+    var welcome = document.getElementById('welcome');
+    if (!container) return;
+    if (messages.length === 0) {
+      welcome.style.display = '';
+      container.innerHTML = '';
+      container.appendChild(welcome);
+      return;
+    }
+    welcome.style.display = 'none';
+    container.innerHTML = '';
+    for (var i = 0; i < messages.length; i++) {
+      var m = messages[i];
+      var div = document.createElement('div');
+      if (m.tool_call) {
+        div.className = 'msg-tool';
+        div.innerHTML = '<div class="msg-tool-name">🔧 ' + escapeHtml(m.tool_call) + '</div>' +
+          '<div class="msg-tool-args">Args: ' + escapeHtml(m.tool_args) + '</div>';
+      } else if (m.tool_result) {
+        div.className = 'msg-result';
+        div.textContent = m.tool_result;
+      } else if (m.error) {
+        div.className = 'msg error';
+        div.textContent = 'Error: ' + m.error;
+      } else {
+        div.className = 'msg ' + (m.role === 'user' ? 'user' : 'assistant');
+        div.textContent = m.content || '';
+      }
+      container.appendChild(div);
+    }
+    container.scrollTop = container.scrollHeight;
+  }
+
+  function appendMsg(m) {
+    messages.push(m);
+    renderMessages();
+  }
+
+  async function sendMessage() {
+    var input = document.getElementById('messageInput');
+    var sendBtn = document.getElementById('sendBtn');
+    var content = input.value.trim();
+    if (!content || streaming) return;
+    input.value = '';
+    input.style.height = 'auto';
+    streaming = true;
+    sendBtn.disabled = true;
+
+    appendMsg({ role: 'user', content: content });
+    appendMsg({ role: 'assistant', content: '' });
+
+    try {
+      var resp = await api('/api/chat', {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        ...opts
+        body: JSON.stringify({ message: content, history: [] })
       });
-      return res.json().catch(() => ({}));
-    }
 
-    function escapeHtml(s) {
-      if (!s) return '';
-      return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
-    }
-
-    function renderMessages() {
-      const container = document.getElementById('messages');
-      if (!container) return;
-      container.innerHTML = messages.map((m, i) => {
-        if (m.tool_call) {
-          return '<div style="background: #1e293b; border-radius: 8px; padding: 12px; margin: 8px 0; border-left: 3px solid #3b82f6;">' +
-            '<div style="font-size: 12px; color: #3b82f6; margin-bottom: 4px;">🔧 TOOL: ' + escapeHtml(m.tool_call) + '</div>' +
-            '<div style="font-size: 12px; color: #94a3b8;">Args: ' + escapeHtml(m.tool_args) + '</div>' +
-            '</div>';
-        }
-        if (m.tool_result) {
-          return '<div style="background: #1e293b; border-radius: 8px; padding: 12px; margin: 8px 0; border-left: 3px solid #22c55e;">' +
-            '<div style="font-size: 12px; color: #22c55e; margin-bottom: 4px;">✅ RESULT</div>' +
-            '<div style="font-size: 12px; color: #94a3b8; white-space: pre-wrap; max-height: 200px; overflow-y: auto;">' + escapeHtml(m.tool_result) + '</div>' +
-            '</div>';
-        }
-        const isUser = m.role === 'user';
-        return '<div style="padding: 12px 16px; border-radius: 8px; margin: 8px 0; ' +
-          (isUser ? 'background: #1e3a5f; text-align: right; margin-left: 60px;' : 'background: #1e293b; margin-right: 60px;') + '">' +
-          '<div style="font-size: 11px; color: #64748b; margin-bottom: 4px;">' + (isUser ? 'You' : 'AI') + '</div>' +
-          '<div style="white-space: pre-wrap;">' + escapeHtml(m.content) + '</div>' +
-          '</div>';
-      }).join('');
-      container.scrollTop = container.scrollHeight;
-    }
-
-    async function sendMessage() {
-      const input = document.getElementById('messageInput');
-      const content = input.value.trim();
-      if (!content || streaming) return;
-      input.value = '';
-      messages.push({ role: 'user', content });
-      renderMessages();
-      streaming = true;
-
-      try {
-        messages.push({ role: 'assistant', content: '' });
+      if (!resp.ok) {
+        var errData = await resp.json().catch(function() { return {}; });
+        messages[messages.length - 1].error = (errData.detail || 'Server error: ' + resp.status);
         renderMessages();
+        return;
+      }
 
-        const resp = await fetch('/api/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: content, history: [] })
-        });
+      var reader = resp.body.getReader();
+      var decoder = new TextDecoder();
+      var lastRole = 'chunk';
+      var lastContent = '';
 
-        const reader = resp.body.getReader();
-        const decoder = new TextDecoder();
-        let lastRole = 'assistant';
-        let lastContent = '';
-
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          const text = decoder.decode(value);
-          const lines = text.split('\\n');
-          for (const line of lines) {
-            if (line.startsWith('event: ')) {
-              lastRole = line.slice(7).trim();
-            } else if (line.startsWith('data: ')) {
-              try {
-                const data = JSON.parse(line.slice(6));
-                if (lastRole === 'chunk' && data.content !== undefined) {
-                  lastContent += data.content;
-                  messages[messages.length - 1].content = lastContent;
-                  renderMessages();
-                } else if (lastRole === 'tool_call') {
-                  messages.push({ tool_call: data.name, tool_args: data.args });
-                  renderMessages();
-                } else if (lastRole === 'tool_result') {
-                  messages.push({ tool_result: data.result });
-                  renderMessages();
-                } else if (lastRole === 'done' || lastRole === 'error') {
-                  streaming = false;
-                  return;
-                }
-              } catch(e) {}
-            }
+      while (true) {
+        var result = await reader.read();
+        if (result.done) break;
+        var text = decoder.decode(result.value);
+        var lines = text.split('\n');
+        for (var j = 0; j < lines.length; j++) {
+          var line = lines[j];
+          if (line.indexOf('event:') === 0) {
+            lastRole = line.slice(7).trim();
+          } else if (line.indexOf('data:') === 0) {
+            try {
+              var data = JSON.parse(line.slice(6));
+              if (lastRole === 'chunk' && data.content !== undefined) {
+                lastContent += data.content;
+                messages[messages.length - 1].content = lastContent;
+                renderMessages();
+              } else if (lastRole === 'tool_call') {
+                appendMsg({ tool_call: data.name, tool_args: data.args });
+              } else if (lastRole === 'tool_result') {
+                appendMsg({ tool_result: data.result });
+              } else if (lastRole === 'done' || lastRole === 'error') {
+                streaming = false;
+                sendBtn.disabled = false;
+                return;
+              }
+            } catch (e) {}
           }
         }
-      } catch (e) {
-        messages.push({ role: 'error', content: 'Error: ' + e.message });
       }
-      streaming = false;
+    } catch (e) {
+      if (e.name === 'AbortError') {
+        messages[messages.length - 1].error = 'Request timed out. Is the server running?';
+      } else {
+        messages[messages.length - 1].error = e.message;
+      }
       renderMessages();
     }
+    streaming = false;
+    sendBtn.disabled = false;
+  }
 
-    document.addEventListener('DOMContentLoaded', () => {
-      const input = document.getElementById('messageInput');
-      if (input) {
-        input.addEventListener('keydown', e => {
-          if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            sendMessage();
-          }
-        });
+  async function loadFiles(path) {
+    var listEl = document.getElementById('file-list');
+    var welcomeEl = document.getElementById('welcome-files');
+    try {
+      var resp = await api('/api/files/list', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ path: path || '.' })
+      });
+      var data = await resp.json();
+      if (!data.success) { welcomeEl.textContent = 'Failed to load files'; return; }
+      if (!data.files || data.files.length === 0) {
+        welcomeEl.textContent = 'No files found';
+        return;
       }
-    });
-  </script>
+      listEl.innerHTML = '';
+      data.files.forEach(function(f) {
+        var item = document.createElement('div');
+        item.className = 'file-item ' + (f.isDir ? 'folder' : 'file');
+        item.textContent = (f.isDir ? '📁 ' : '📄 ') + f.name;
+        listEl.appendChild(item);
+      });
+    } catch (e) {
+      welcomeEl.textContent = 'Could not load files';
+    }
+  }
+
+  async function checkConnection() {
+    var statusEl = document.getElementById('conn-status');
+    var bannerEl = document.getElementById('conn-banner');
+    var welcomeEl = document.getElementById('welcome-files');
+    try {
+      var resp = await api('/api/ping', { method: 'GET' });
+      var data = await resp.json();
+      connected = true;
+      statusEl.textContent = data.webdav_online ? '🟢 Connected to Filen' : '🟡 Filen WebDAV offline';
+      statusEl.className = data.webdav_online ? 'status-ok' : '';
+      bannerEl.classList.remove('show');
+      welcomeEl.textContent = data.webdav_online ? 'Loading files...' : 'WebDAV offline — chat still works';
+      if (data.webdav_online) loadFiles('.');
+    } catch (e) {
+      connected = false;
+      statusEl.textContent = '🔴 Server unreachable';
+      statusEl.className = 'status-err';
+      bannerEl.classList.add('show');
+      welcomeEl.textContent = 'Cannot reach server';
+    }
+  }
+
+  function autoResize(el) {
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+  }
+
+  document.getElementById('messageInput').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  });
+  document.getElementById('messageInput').addEventListener('input', function() { autoResize(this); });
+  document.getElementById('sendBtn').addEventListener('click', sendMessage);
+
+  checkConnection();
+})();
+</script>
 </body>
 </html>`
 

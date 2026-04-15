@@ -32,6 +32,8 @@ go.work.sum
 # .vscode/
 # Release build artifacts
 dist/
+gofiln
+gofilen
 
 # Next.js build outputs
 web/node_modules/
