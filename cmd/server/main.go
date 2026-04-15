@@ -263,12 +263,26 @@ func filesListHandler(f filer.Filer) handlerFunc {
 		if req.Path == "" {
 			req.Path = "."
 		}
+
+		// Get raw listing for backward compatibility
 		result, err := f.List(req.Path)
 		if err != nil {
 			writeJSON(w, map[string]string{"error": err.Error()})
 			return nil
 		}
-		writeJSON(w, map[string]string{"result": result})
+
+		// Get structured file list
+		files, err := f.ListFiles(req.Path)
+		if err != nil {
+			writeJSON(w, map[string]interface{}{"success": true, "listing": result, "files": []interface{}{}, "error": err.Error()})
+			return nil
+		}
+
+		writeJSON(w, map[string]interface{}{
+			"success": true,
+			"listing": result,
+			"files":   files,
+		})
 		return nil
 	}
 }
