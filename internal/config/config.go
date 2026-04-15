@@ -221,7 +221,7 @@ func (c *Config) ToMap() map[string]string {
 	return map[string]string{
 		"model":       c.Model,
 		"ollama_url":  c.OllamaURL,
-		"webdav_url":   c.WebDAVURL,
+		"webdav_url":  c.WebDAVURL,
 		"server_port": c.ServerPort,
 	}
 }

@@ -266,7 +266,7 @@ func (f *WebDAVFiler) Move(src, dst string) (string, error) {
 		return "", err
 	}
 	req.Header.Set("Destination", f.absURL(dstAbs))
-	
+
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {

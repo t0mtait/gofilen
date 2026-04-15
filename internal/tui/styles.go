@@ -4,18 +4,18 @@ import "github.com/charmbracelet/lipgloss"
 
 var (
 	// ── Palette ───────────────────────────────────────────────────────────────
-	cBase    = lipgloss.Color("#1E1E2E") // dark background
-	cSurface = lipgloss.Color("#313244") // slightly lighter surface
-	cMuted   = lipgloss.Color("#6C7086") // muted text
-	cSubtext = lipgloss.Color("#A6ADC8") // secondary text
-	cText    = lipgloss.Color("#CDD6F4") // primary text
+	cBase     = lipgloss.Color("#1E1E2E") // dark background
+	cSurface  = lipgloss.Color("#313244") // slightly lighter surface
+	cMuted    = lipgloss.Color("#6C7086") // muted text
+	cSubtext  = lipgloss.Color("#A6ADC8") // secondary text
+	cText     = lipgloss.Color("#CDD6F4") // primary text
 	cLavender = lipgloss.Color("#B4BEFE") // accent
-	cBlue    = lipgloss.Color("#89B4FA") // user messages
-	cGreen   = lipgloss.Color("#A6E3A1") // AI messages
-	cYellow  = lipgloss.Color("#F9E2AF") // tool calls
-	cPeach   = lipgloss.Color("#FAB387") // tool results
-	cRed     = lipgloss.Color("#F38BA8") // errors
-	cTeal    = lipgloss.Color("#94E2D5") // system / header
+	cBlue     = lipgloss.Color("#89B4FA") // user messages
+	cGreen    = lipgloss.Color("#A6E3A1") // AI messages
+	cYellow   = lipgloss.Color("#F9E2AF") // tool calls
+	cPeach    = lipgloss.Color("#FAB387") // tool results
+	cRed      = lipgloss.Color("#F38BA8") // errors
+	cTeal     = lipgloss.Color("#94E2D5") // system / header
 
 	// ── Header ────────────────────────────────────────────────────────────────
 	headerStyle = lipgloss.NewStyle().
