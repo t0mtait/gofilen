@@ -1,3 +1,10 @@
+## [1.1.1](https://github.com/t0mtait/gofilen/compare/v1.1.0...v1.1.1) (2026-04-15)
+
+
+### Bug Fixes
+
+* rewrite embedded web UI - add init, fetch timeouts, file sidebar, proper rendering ([bba341d](https://github.com/t0mtait/gofilen/commit/bba341d2be310be0a6f4ef4273c747b9464aaf19))
+
 # [1.1.0](https://github.com/t0mtait/gofilen/compare/v1.0.1...v1.1.0) (2026-04-14)
 
 
