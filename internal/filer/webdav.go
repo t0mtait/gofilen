@@ -331,6 +331,28 @@ func (f *WebDAVFiler) Tree(maxDepth int) string {
 	return result
 }
 
+// ListFiles implements Filer.
+func (f *WebDAVFiler) ListFiles(path string) ([]File, error) {
+	if err := f.validatePath(path); err != nil {
+		return nil, err
+	}
+	absPath := f.resolvePath(path)
+	entries, err := f.client.ReadDir(absPath)
+	if err != nil {
+		return nil, err
+	}
+	var files []File
+	for _, e := range entries {
+		files = append(files, File{
+			Name:     e.Name(),
+			Size:     e.Size(),
+			IsDir:    e.IsDir(),
+			Modified: e.ModTime(),
+		})
+	}
+	return files, nil
+}
+
 func (f *WebDAVFiler) walkTree(sb *strings.Builder, path, indent string, depth, maxDepth int) {
 	if depth > maxDepth {
 		return

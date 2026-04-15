@@ -298,6 +298,32 @@ func (f *LocalFiler) Tree(maxDepth int) string {
 	return result
 }
 
+// ListFiles implements Filer.
+func (f *LocalFiler) ListFiles(path string) ([]File, error) {
+	target, err := f.resolve(path)
+	if err != nil {
+		return nil, err
+	}
+	entries, err := os.ReadDir(target)
+	if err != nil {
+		return nil, err
+	}
+	var files []File
+	for _, e := range entries {
+		info, err := e.Info()
+		if err != nil {
+			continue
+		}
+		files = append(files, File{
+			Name:     e.Name(),
+			Size:     info.Size(),
+			IsDir:    e.IsDir(),
+			Modified: info.ModTime(),
+		})
+	}
+	return files, nil
+}
+
 func walkTreeLocal(sb *strings.Builder, path, indent string, depth, maxDepth int) {
 	if depth > maxDepth {
 		return
