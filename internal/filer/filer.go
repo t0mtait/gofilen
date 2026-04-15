@@ -4,7 +4,7 @@ import "time"
 
 // File represents a file or directory entry.
 type File struct {
-	Name      string    `json:"name"`
+	Name     string    `json:"name"`
 	Size     int64     `json:"size"`
 	IsDir    bool      `json:"isDir"`
 	Modified time.Time `json:"modified"`
