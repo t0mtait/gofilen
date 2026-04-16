@@ -34,6 +34,7 @@ go.work.sum
 dist/
 gofiln
 gofilen
+server
 
 # Next.js build outputs
 web/node_modules/
