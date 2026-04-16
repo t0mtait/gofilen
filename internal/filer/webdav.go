@@ -246,14 +246,15 @@ func (f *WebDAVFiler) Delete(path string) (string, error) {
 
 // Move implements Filer.
 func (f *WebDAVFiler) Move(src, dst string) (string, error) {
-	if err := f.validatePath(src); err != nil {
-		return "", err
-	}
-	if err := f.validatePath(dst); err != nil {
-		return "", err
-	}
 	srcAbs := f.resolvePath(src)
 	dstAbs := f.resolvePath(dst)
+	// Validate resolved paths to catch absolute-path escapes
+	if !strings.HasPrefix(srcAbs, f.rootPath) {
+		return "", fmt.Errorf("path escapes WebDAV root: %s", src)
+	}
+	if !strings.HasPrefix(dstAbs, f.rootPath) {
+		return "", fmt.Errorf("path escapes WebDAV root: %s", dst)
+	}
 
 	parent := filepath.Dir(dstAbs)
 	if parent != f.rootPath {
@@ -283,14 +284,15 @@ func (f *WebDAVFiler) Move(src, dst string) (string, error) {
 
 // Copy implements Filer.
 func (f *WebDAVFiler) Copy(src, dst string) (string, error) {
-	if err := f.validatePath(src); err != nil {
-		return "", err
-	}
-	if err := f.validatePath(dst); err != nil {
-		return "", err
-	}
 	srcAbs := f.resolvePath(src)
 	dstAbs := f.resolvePath(dst)
+	// Validate resolved paths to catch absolute-path escapes
+	if !strings.HasPrefix(srcAbs, f.rootPath) {
+		return "", fmt.Errorf("path escapes WebDAV root: %s", src)
+	}
+	if !strings.HasPrefix(dstAbs, f.rootPath) {
+		return "", fmt.Errorf("path escapes WebDAV root: %s", dst)
+	}
 
 	info, err := f.client.Stat(srcAbs)
 	if err != nil {
