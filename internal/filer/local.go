@@ -22,6 +22,13 @@ func NewLocal(base string) (*LocalFiler, error) {
 	if err != nil {
 		return nil, err
 	}
+	// Resolve any symlinks in the base directory so that path-containment
+	// checks in resolve() (which also calls EvalSymlinks on child paths) are
+	// comparing apples to apples.  On macOS, t.TempDir() returns /var/... but
+	// EvalSymlinks resolves that to /private/var/..., breaking the prefix check.
+	if real, err := filepath.EvalSymlinks(abs); err == nil {
+		abs = real
+	}
 	return &LocalFiler{Base: abs}, nil
 }
 
