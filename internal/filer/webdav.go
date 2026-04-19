@@ -3,6 +3,7 @@ package filer
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"path/filepath"
@@ -27,7 +28,8 @@ type ActionRecord struct {
 // WebDAVFiler implements Filer backed by a Filen WebDAV server.
 type WebDAVFiler struct {
 	client   *gowebdav.Client
-	http     *http.Client // used for raw HTTP verbs (e.g. MOVE) with auth
+	user     string
+	pass     string
 	rootPath string
 	baseURL  string
 	user     string
@@ -51,7 +53,8 @@ func NewWebDAV(webdavURL, user, pass string) (*WebDAVFiler, error) {
 
 	return &WebDAVFiler{
 		client:   c,
-		http:     &http.Client{},
+		user:     user,
+		pass:     pass,
 		rootPath: parsedURL.Path,
 		baseURL:  webdavURL,
 		user:     user,
@@ -290,13 +293,16 @@ func (f *WebDAVFiler) Move(src, dst string) (string, error) {
 		req.SetBasicAuth(f.user, f.pass)
 	}
 
-	resp, err := f.http.Do(req)
+	client := &http.Client{}
+	client.Transport = &http.Transport{}
+	resp, err := client.Do(req)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("webdav request failed: %w", err)
 	}
-	resp.Body.Close()
+	defer resp.Body.Close()
 	if resp.StatusCode >= 400 && resp.StatusCode != 201 && resp.StatusCode != 204 {
-		return "", fmt.Errorf("WebDAV MOVE failed with HTTP %d", resp.StatusCode)
+		body, _ := io.ReadAll(io.LimitReader(resp.Body, 1024))
+		return "", fmt.Errorf("webdav MOVE failed with HTTP %d: %s", resp.StatusCode, string(body))
 	}
 	result := fmt.Sprintf("moved %s → %s", src, dst)
 	f.recordAction("move", fmt.Sprintf("%s → %s", src, dst), result)
