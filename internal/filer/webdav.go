@@ -54,7 +54,7 @@ func NewWebDAV(webdavURL, user, pass string) (*WebDAVFiler, error) {
 		user:     user,
 		pass:     pass,
 		rootPath: parsedURL.Path,
-		baseURL:  webdavURL,
+		baseURL:  strings.TrimSuffix(webdavURL, "/"),
 	}, nil
 }
 
