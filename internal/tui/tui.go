@@ -148,9 +148,18 @@ Current file tree of the Filen drive (up to 3 levels):
 
 // Run starts the Bubble Tea program.
 func Run(cfg config.Config) error {
-	f, err := filer.NewLocal(cfg.Dir)
-	if err != nil {
-		return fmt.Errorf("cannot access Filen mount at %s: %w", cfg.Dir, err)
+	var f filer.Filer
+	var err error
+	if cfg.HasWebDAVCredentials() {
+		f, err = filer.NewWebDAV(cfg.WebDAVURL, cfg.WebDAVUser, cfg.WebDAVPassword)
+		if err != nil {
+			return fmt.Errorf("cannot connect to WebDAV at %s: %w", cfg.WebDAVURL, err)
+		}
+	} else {
+		f, err = filer.NewLocal(cfg.Dir)
+		if err != nil {
+			return fmt.Errorf("cannot access Filen mount at %s: %w", cfg.Dir, err)
+		}
 	}
 	m := newModel(cfg, f)
 	p := tea.NewProgram(m, tea.WithAltScreen(), tea.WithMouseCellMotion())
