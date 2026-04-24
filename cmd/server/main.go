@@ -15,37 +15,14 @@ import (
 
 var version = "dev"
 
-func main() {
-	cfg := config.Default()
-
-	serverMode := flag.Bool("server", false, "Run as HTTP server")
-	flag.StringVar(&cfg.Dir, "dir", cfg.Dir, "Filen mount directory (local mode)")
-	flag.StringVar(&cfg.Model, "model", cfg.Model, "Ollama model name")
-	flag.StringVar(&cfg.OllamaURL, "ollama", cfg.OllamaURL, "Ollama API base URL")
-	flag.StringVar(&cfg.WebDAVURL, "webdav-url", cfg.WebDAVURL, "WebDAV server URL")
-	flag.StringVar(&cfg.WebDAVUser, "webdav-user", cfg.WebDAVUser, "WebDAV username")
-	flag.StringVar(&cfg.WebDAVPassword, "webdav-password", cfg.WebDAVPassword, "WebDAV password")
-	flag.StringVar(&cfg.ServerPort, "port", cfg.ServerPort, "HTTP server port")
-	flag.StringVar(&cfg.FilenDataDir, "filen-data-dir", cfg.FilenDataDir, "Filen CLI data directory")
-	versionFlag := flag.Bool("v", false, "Show version")
-	flag.Parse()
-
-	if *versionFlag {
-		fmt.Println("gofilen-server", version)
-		return
-	}
-
-	if !*serverMode {
-		fmt.Println("Use --server to run as HTTP server")
-		fmt.Println("  go run ./cmd/server --server")
-		return
-	}
-
+// RunServer runs the HTTP server with the given config.
+// It blocks until the server exits.
+func RunServer(cfg config.Config) error {
 	if errs := cfg.Validate(); len(errs) > 0 {
 		for _, err := range errs {
 			fmt.Fprintf(os.Stderr, "config error: %s\n", err)
 		}
-		os.Exit(1)
+		return fmt.Errorf("invalid config")
 	}
 
 	if cfg.HasWebDAVCredentials() {
@@ -104,8 +81,9 @@ func main() {
 	log.Printf("Server starting on http://localhost:%s", cfg.ServerPort)
 	addr := ":" + cfg.ServerPort
 	if err := http.ListenAndServe(addr, handler); err != nil {
-		log.Fatalf("Server failed: %v", err)
+		return fmt.Errorf("server failed: %w", err)
 	}
+	return nil
 }
 
 type handlerFunc func(w http.ResponseWriter, r *http.Request) error

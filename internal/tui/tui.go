@@ -110,7 +110,7 @@ CAPABILITIES — when asked "what can you do?" or similar, list these:
 - Show action history (all file operations performed this session)
 - Answer questions about the files and their contents
 
-TOOLS AVAILABLE: list_files, read_file, write_file, create_dir, delete, move, copy, get_action_history
+TOOLS AVAILABLE: list_files, read_file, write_file, create_dir, delete, move, copy, get_action_history, tree
 
 RULES:
 1. Only call a tool when the user explicitly asks you to do something with their files.
@@ -148,9 +148,18 @@ Current file tree of the Filen drive (up to 3 levels):
 
 // Run starts the Bubble Tea program.
 func Run(cfg config.Config) error {
-	f, err := filer.NewLocal(cfg.Dir)
-	if err != nil {
-		return fmt.Errorf("cannot access Filen mount at %s: %w", cfg.Dir, err)
+	var f filer.Filer
+	var err error
+	if cfg.HasWebDAVCredentials() {
+		f, err = filer.NewWebDAV(cfg.WebDAVURL, cfg.WebDAVUser, cfg.WebDAVPassword)
+		if err != nil {
+			return fmt.Errorf("cannot connect to WebDAV at %s: %w", cfg.WebDAVURL, err)
+		}
+	} else {
+		f, err = filer.NewLocal(cfg.Dir)
+		if err != nil {
+			return fmt.Errorf("cannot access Filen mount at %s: %w", cfg.Dir, err)
+		}
 	}
 	m := newModel(cfg, f)
 	p := tea.NewProgram(m, tea.WithAltScreen(), tea.WithMouseCellMotion())
@@ -359,7 +368,7 @@ func (m Model) handleStreamEvent(msg streamEventMsg) (Model, tea.Cmd) {
 		m.streaming = ""
 		m.viewport.SetContent(m.renderChat())
 		m.viewport.GotoBottom()
-		return m, nil
+		return m, waitForStream(msg.ch)
 	}
 
 	return m, waitForStream(msg.ch)

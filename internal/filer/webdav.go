@@ -32,8 +32,6 @@ type WebDAVFiler struct {
 	pass     string
 	rootPath string
 	baseURL  string
-	user     string
-	pass     string
 	mu       sync.Mutex
 	actions  []ActionRecord
 }
@@ -56,9 +54,7 @@ func NewWebDAV(webdavURL, user, pass string) (*WebDAVFiler, error) {
 		user:     user,
 		pass:     pass,
 		rootPath: parsedURL.Path,
-		baseURL:  webdavURL,
-		user:     user,
-		pass:     pass,
+		baseURL:  strings.TrimSuffix(webdavURL, "/"),
 	}, nil
 }
 
