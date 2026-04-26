@@ -7,6 +7,7 @@ import (
 
 	"github.com/t0mtait/gofilen/internal/config"
 	"github.com/t0mtait/gofilen/internal/tui"
+	"github.com/t0mtait/gofilen/cmd/server"
 )
 
 var version = "dev"
@@ -50,15 +51,8 @@ func main() {
 }
 
 func runServer(cfg config.Config) {
-	// Import and run the server main
-	// This is a bit of a hack - in production you'd build separately
-	// For now, we just print an error since cmd/server has its own main
-	fmt.Println("To run the server, build and run the cmd/server package:")
-	fmt.Println("  go run ./cmd/server --server \\")
-	fmt.Println("    --model", cfg.Model)
-	fmt.Println("    --ollama", cfg.OllamaURL)
-	fmt.Println("    --webdav-url", cfg.WebDAVURL)
-	fmt.Println("    --webdav-user", cfg.WebDAVUser)
-	fmt.Println("    --webdav-password", cfg.WebDAVPassword)
-	fmt.Println("    --port", cfg.ServerPort)
+	if err := server.RunServer(cfg); err != nil {
+		fmt.Fprintln(os.Stderr, "server error:", err)
+		os.Exit(1)
+	}
 }

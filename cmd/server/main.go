@@ -1,8 +1,9 @@
-package main
+// Package server provides the HTTP server for gofilen.
+// It is imported by the root main.go.
+package server
 
 import (
 	"encoding/json"
-	"flag"
 	"fmt"
 	"log"
 	"net/http"
@@ -383,8 +384,10 @@ type treeRequest struct {
 func filesTreeHandler(f filer.Filer) handlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) error {
 		var req treeRequest
-		json.NewDecoder(r.Body).Decode(&req)
-		if req.Depth < 1 || req.Depth > 10 {
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			// Invalid request — use default depth
+			req.Depth = 3
+		} else if req.Depth < 1 || req.Depth > 10 {
 			req.Depth = 3
 		}
 		result := f.Tree(req.Depth)

@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 )
 
 // Role is an LLM conversation participant.
@@ -87,7 +88,7 @@ func NewClient(baseURL, model string) *Client {
 	return &Client{
 		BaseURL: baseURL,
 		Model:   model,
-		http:    &http.Client{},
+		http:    &http.Client{Timeout: 120 * time.Second},
 	}
 }
 

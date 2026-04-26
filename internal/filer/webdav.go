@@ -289,8 +289,7 @@ func (f *WebDAVFiler) Move(src, dst string) (string, error) {
 		req.SetBasicAuth(f.user, f.pass)
 	}
 
-	client := &http.Client{}
-	client.Transport = &http.Transport{}
+	client := &http.Client{Timeout: 60 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("webdav request failed: %w", err)
