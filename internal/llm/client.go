@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 )
 
 // Role is an LLM conversation participant.
@@ -87,7 +88,9 @@ func NewClient(baseURL, model string) *Client {
 	return &Client{
 		BaseURL: baseURL,
 		Model:   model,
-		http:    &http.Client{},
+		http: &http.Client{
+			Timeout: 60 * time.Second,
+		},
 	}
 }
 
@@ -152,13 +155,16 @@ func (c *Client) chat(ctx context.Context, messages []Message, tools []Tool, ch 
 			for i := range r.Message.ToolCalls {
 				ch <- StreamEvent{Type: "tool_call_raw", ToolName: r.Message.ToolCalls[i].Function.Name, Content: string(r.Message.ToolCalls[i].Function.Arguments)}
 			}
-			// tool calls imply done
+			// tool calls imply done — channel will be closed by defer
 			return
 		}
 		if r.Message.Content != "" {
 			ch <- StreamEvent{Type: "chunk", Content: r.Message.Content}
 		}
 		if r.Done {
+			// Explicitly send done so RunConversation always receives a terminal event,
+			// even when the final message has no content (avoids hanging the TUI).
+			ch <- StreamEvent{Type: "done"}
 			return
 		}
 	}
