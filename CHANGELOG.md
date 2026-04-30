@@ -1,3 +1,11 @@
+## [1.1.3](https://github.com/t0mtait/gofilen/compare/v1.1.2...v1.1.3) (2026-04-30)
+
+
+### Bug Fixes
+
+* **llm:** add HTTP timeout and send explicit done event to prevent TUI hang ([5b8a754](https://github.com/t0mtait/gofilen/commit/5b8a754f38c50f85851a05de31a563d08dc0de5d))
+* remove duplicate user/pass fields in WebDAVFiler struct ([8bf82c6](https://github.com/t0mtait/gofilen/commit/8bf82c61a30950b72a46edee5be0d87a7e294c97))
+
 ## [1.1.2](https://github.com/t0mtait/gofilen/compare/v1.1.1...v1.1.2) (2026-04-15)
 
 
