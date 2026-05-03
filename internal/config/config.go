@@ -95,7 +95,10 @@ func httpGet(url string) (*http.Response, error) {
 
 // SaveToFile saves configuration to a JSON file.
 func (c *Config) SaveToFile(path string) error {
-	data, _ := json.MarshalIndent(c, "", "  ")
+	data, err := json.MarshalIndent(c, "", "  ")
+	if err != nil {
+		return fmt.Errorf("failed to marshal config: %w", err)
+	}
 	return os.WriteFile(path, data, 0o600)
 }
 
