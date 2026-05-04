@@ -50,15 +50,15 @@ func main() {
 }
 
 func runServer(cfg config.Config) {
-	// Import and run the server main
-	// This is a bit of a hack - in production you'd build separately
-	// For now, we just print an error since cmd/server has its own main
-	fmt.Println("To run the server, build and run the cmd/server package:")
-	fmt.Println("  go run ./cmd/server --server \\")
-	fmt.Println("    --model", cfg.Model)
-	fmt.Println("    --ollama", cfg.OllamaURL)
-	fmt.Println("    --webdav-url", cfg.WebDAVURL)
-	fmt.Println("    --webdav-user", cfg.WebDAVUser)
-	fmt.Println("    --webdav-password", cfg.WebDAVPassword)
-	fmt.Println("    --port", cfg.ServerPort)
+	// Server mode requires the cmd/server entry point for proper initialization.
+	// Running the server from the main binary is not supported.
+	fmt.Fprintln(os.Stderr, "Error: server mode must be run via the cmd/server package:")
+	fmt.Fprintln(os.Stderr, "  go run ./cmd/server \\")
+	fmt.Fprintln(os.Stderr, "    --server \\")
+	fmt.Fprintln(os.Stderr, "    --model", cfg.Model)
+	fmt.Fprintln(os.Stderr, "    --ollama", cfg.OllamaURL)
+	fmt.Fprintln(os.Stderr, "    --webdav-url", cfg.WebDAVURL)
+	fmt.Fprintln(os.Stderr, "    --webdav-user", cfg.WebDAVUser)
+	fmt.Fprintln(os.Stderr, "    --port", cfg.ServerPort)
+	os.Exit(1)
 }

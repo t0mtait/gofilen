@@ -14,9 +14,6 @@ import (
 	"github.com/studio-b12/gowebdav"
 )
 
-// maxReadSize is the maximum file size (1 MB) the Filer will read inline.
-const maxReadSize = 1 << 20
-
 // ActionRecord logs a single tool execution.
 type ActionRecord struct {
 	Time   time.Time
@@ -32,8 +29,6 @@ type WebDAVFiler struct {
 	pass     string
 	rootPath string
 	baseURL  string
-	user     string
-	pass     string
 	mu       sync.Mutex
 	actions  []ActionRecord
 }
@@ -57,8 +52,6 @@ func NewWebDAV(webdavURL, user, pass string) (*WebDAVFiler, error) {
 		pass:     pass,
 		rootPath: parsedURL.Path,
 		baseURL:  webdavURL,
-		user:     user,
-		pass:     pass,
 	}, nil
 }
 
