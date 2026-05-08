@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/t0mtait/gofilen/internal/config"
@@ -53,6 +54,8 @@ func runServer(cfg config.Config) {
 	// Import and run the server main
 	// This is a bit of a hack - in production you'd build separately
 	// For now, we just print an error since cmd/server has its own main
+	log.Printf("Starting gofilen server with model=%s, ollama=%s, port=%s",
+		cfg.Model, cfg.OllamaURL, cfg.ServerPort)
 	fmt.Println("To run the server, build and run the cmd/server package:")
 	fmt.Println("  go run ./cmd/server --server \\")
 	fmt.Println("    --model", cfg.Model)
