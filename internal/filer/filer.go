@@ -32,6 +32,8 @@ type Filer interface {
 	Copy(src, dst string) (string, error)
 	// Tree returns a visual tree of the directory up to maxDepth levels.
 	Tree(maxDepth int) string
+	// TreeWithPath returns a visual tree of the directory at path up to maxDepth levels.
+	TreeWithPath(path string, maxDepth int) string
 	// ActionHistory returns a human-readable log of all executed file operations.
 	ActionHistory() string
 	// Ping checks connectivity to the underlying storage.

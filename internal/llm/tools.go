@@ -127,11 +127,12 @@ func FileTools() []Tool {
 			Type: "function",
 			Function: ToolFunction{
 				Name:        "tree",
-				Description: "Show a tree view of the Filen directory up to a given depth (default 3, max 10). Use this to explore the directory structure when the user asks to see the folder hierarchy.",
+				Description: "Show a tree view of a Filen directory up to a given depth (default 3, max 10). Use this to explore the directory structure when the user asks to see the folder hierarchy.",
 				Parameters: ToolParameters{
 					Type:     "object",
 					Required: []string{},
 					Properties: map[string]PropertySchema{
+						"path":  {Type: "string", Description: "Directory path relative to the Filen drive root. Use '.' for the root. Defaults to root if not specified."},
 						"depth": {Type: "integer", Description: "Tree depth to display (1-10, default 3). Higher values show more nested directories."},
 					},
 				},
@@ -162,7 +163,8 @@ func ExecuteTool(name string, argsRaw json.RawMessage, f filer.Filer) (string, e
 		return f.ActionHistory(), nil
 	case "tree":
 		var treeArgs struct {
-			Depth *int `json:"depth"`
+			Path  string `json:"path"`
+			Depth *int   `json:"depth"`
 		}
 		if err := json.Unmarshal(argsRaw, &treeArgs); err != nil {
 			return "", fmt.Errorf("invalid tree arguments: %w", err)
@@ -171,7 +173,11 @@ func ExecuteTool(name string, argsRaw json.RawMessage, f filer.Filer) (string, e
 		if treeArgs.Depth != nil && *treeArgs.Depth >= 1 && *treeArgs.Depth <= 10 {
 			depth = *treeArgs.Depth
 		}
-		return f.Tree(depth), nil
+		targetPath := treeArgs.Path
+		if targetPath == "" {
+			targetPath = "."
+		}
+		return f.TreeWithPath(targetPath, depth), nil
 	default:
 		return "", fmt.Errorf("unknown tool: %q", name)
 	}
