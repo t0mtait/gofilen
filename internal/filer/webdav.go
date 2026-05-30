@@ -14,9 +14,6 @@ import (
 	"github.com/studio-b12/gowebdav"
 )
 
-// maxReadSize is the maximum file size (1 MB) the Filer will read inline.
-const maxReadSize = 1 << 20
-
 // ActionRecord logs a single tool execution.
 type ActionRecord struct {
 	Time   time.Time

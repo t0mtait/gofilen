@@ -10,6 +10,9 @@ import (
 	"time"
 )
 
+// maxReadSize is the maximum file size (1 MB) the Filer will read inline.
+const maxReadSize = 1 << 20
+
 // LocalFiler is the original filesystem-backed Filer.
 type LocalFiler struct {
 	Base    string
