@@ -305,6 +305,21 @@ func (f *LocalFiler) Tree(maxDepth int) string {
 	return result
 }
 
+// TreeWithPath implements Filer.
+func (f *LocalFiler) TreeWithPath(path string, maxDepth int) string {
+	target, err := f.resolve(path)
+	if err != nil {
+		return "Error: " + err.Error()
+	}
+	var sb strings.Builder
+	walkTreeLocal(&sb, target, "", 0, maxDepth)
+	result := sb.String()
+	if result == "" {
+		return "(empty)"
+	}
+	return result
+}
+
 // ListFiles implements Filer.
 func (f *LocalFiler) ListFiles(path string) ([]File, error) {
 	target, err := f.resolve(path)
