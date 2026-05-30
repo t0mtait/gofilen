@@ -135,7 +135,7 @@ func (f *WebDAVFiler) absURL(path string) string {
 
 // Ping implements Filer.
 func (f *WebDAVFiler) Ping() error {
-	_, err := f.client.ReadDir("/")
+	_, err := f.client.ReadDir(f.rootPath)
 	if err != nil {
 		return fmt.Errorf("WebDAV server not reachable: %w", err)
 	}

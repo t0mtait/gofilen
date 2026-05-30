@@ -274,7 +274,7 @@ func filesListHandler(f filer.Filer) handlerFunc {
 		// Get structured file list
 		files, err := f.ListFiles(req.Path)
 		if err != nil {
-			writeJSON(w, map[string]interface{}{"success": true, "listing": result, "files": []interface{}{}, "error": err.Error()})
+			writeJSON(w, map[string]interface{}{"success": false, "listing": result, "files": []interface{}{}, "error": err.Error()})
 			return nil
 		}
 
