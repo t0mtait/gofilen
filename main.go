@@ -37,8 +37,14 @@ func main() {
 	}
 
 	if *serverMode {
-		// Run as HTTP server - delegate to cmd/server
-		runServer(cfg)
+		fmt.Println("To run the server, build and run the cmd/server package:")
+		fmt.Println("  go run ./cmd/server --server \\")
+		fmt.Println("    --model", cfg.Model)
+		fmt.Println("    --ollama", cfg.OllamaURL)
+		fmt.Println("    --webdav-url", cfg.WebDAVURL)
+		fmt.Println("    --webdav-user", cfg.WebDAVUser)
+		fmt.Println("    --webdav-password", cfg.WebDAVPassword)
+		fmt.Println("    --port", cfg.ServerPort)
 		return
 	}
 
@@ -47,18 +53,4 @@ func main() {
 		fmt.Fprintln(os.Stderr, "error:", err)
 		os.Exit(1)
 	}
-}
-
-func runServer(cfg config.Config) {
-	// Import and run the server main
-	// This is a bit of a hack - in production you'd build separately
-	// For now, we just print an error since cmd/server has its own main
-	fmt.Println("To run the server, build and run the cmd/server package:")
-	fmt.Println("  go run ./cmd/server --server \\")
-	fmt.Println("    --model", cfg.Model)
-	fmt.Println("    --ollama", cfg.OllamaURL)
-	fmt.Println("    --webdav-url", cfg.WebDAVURL)
-	fmt.Println("    --webdav-user", cfg.WebDAVUser)
-	fmt.Println("    --webdav-password", cfg.WebDAVPassword)
-	fmt.Println("    --port", cfg.ServerPort)
 }
